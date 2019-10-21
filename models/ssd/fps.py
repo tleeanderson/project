@@ -9,6 +9,7 @@ sys.path.append(path.abspath('./ssd.pytorch'))
 
 import ssd as model
 import numpy as np
+import datetime
 
 PHASE = 'test'
 IMAGE_SIZE = 300
@@ -18,13 +19,10 @@ def parse_args():
 
     parser.add_argument('--trained-model', required=False, help='Path to trained state_dict file')
     parser.add_argument('--num-classes', required=True, type=int, help='number of classes')
-    parser.add_argument('--image-path', required=True)
-    parser.add_argument('--image-names', required=True, nargs='+')
-    parser.add_argument('--image-size', required=False)
+    parser.add_argument('--image-path', required=True, help='path to images')
+    parser.add_argument('--image-name-file', required=True, help='path to image name file')
+    parser.add_argument('--image-size', required=False, type=int)
     return parser.parse_args()
-
-def average_inference(model):
-    pass
 
 def load_images(im_path, names):
     images, nf = [], []
@@ -36,6 +34,15 @@ def load_images(im_path, names):
         else:
             images.append(im)
     return images, nf
+
+def read_file(path):
+    with open(path) as f:
+        data = f.read()
+
+    return data
+
+def process_file_names(data):
+    return data.split('\n')[:-1]
 
 def resize_images(size, images):
     return [cv2.resize(i, (size, size)) for i in images]
@@ -53,16 +60,10 @@ def build_model(args, phase):
     return ssd_model
 
 def time_model(model, data):
-    gpu_image = data.cuda()
-
-    # i = 10
-    # while i > 0:
-    #     print("Waiting %d seconds to continue" % (i))
-    #     i -= 1
-    #     time.sleep(1)
-
+    test_data = Variable(data)
+    test_data = test_data.cuda()
     start = time.time()
-    out = model(gpu_image).data
+    out = model(test_data)
     end = time.time()
     
     return end - start, out
@@ -72,15 +73,25 @@ def average_inference(model, im_data):
     return points, np.average(list(map(lambda t: t[0], points)))
 
 def test_model(args, phase, size):
-    images, nf = load_images(args.image_path, args.image_names)
+    images, nf = load_images(args.image_path, 
+                             process_file_names(read_file(args.image_name_file)))
     resized_images = prepare_images(resize_images(size, images), size)
 
     ssd_model = build_model(args, phase)
-    ps, avg_ms = average_inference(ssd_model, resized_images)
+    ps, avg_sec = average_inference(ssd_model, resized_images)
 
-    print("points: %s, avg(ms): %d" % (str(list(map(lambda t: t[0], ps))), avg_ms))
-    
+    print("Average per image(ms): %f, Average per image(s): %f, Average FPS: %f" 
+          % (avg_sec * 1000, avg_sec, 1 / avg_sec))
+    print("ps: " + str(list(map(lambda t: t[0], ps))))
+
+def set_default_tensor_type():
+    if torch.cuda.is_available():
+        torch.set_default_tensor_type('torch.cuda.FloatTensor')
+    else:
+        print("ERROR: cuda is not available. Test will exit.")
+
 if __name__ == '__main__':
+    set_default_tensor_type()
     args = parse_args()
-    test_model(args, PHASE, IMAGE_SIZE)
+    test_model(args, PHASE, int(args.image_size) if args.image_size else IMAGE_SIZE)
  
