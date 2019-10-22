@@ -13,15 +13,23 @@ import datetime
 
 PHASE = 'test'
 IMAGE_SIZE = 300
+IMAGE_NAME_FILE = 'top_600.txt'
+TRAINED_MODEL_DIR = 'ssd.pytorch/weights/'
+TRAINED_MODEL_FN = 'ssd300_mAP_77.43_v2.pth'
+TRAINED_MODEL_PATH = path.join(TRAINED_MODEL_DIR, TRAINED_MODEL_FN)
 
 def parse_args():
-    parser = argparse.ArgumentParser(description='Measure Single Shot MultiBox Detector FPS')
+    parser = argparse.ArgumentParser(description='Measure FPS of Single Shot MultiBox Detector')
 
-    parser.add_argument('--trained-model', required=False, help='Path to trained state_dict file')
-    parser.add_argument('--num-classes', required=True, type=int, help='number of classes')
-    parser.add_argument('--image-path', required=True, help='path to images')
-    parser.add_argument('--image-name-file', required=True, help='path to image name file')
+    parser.add_argument('--trained-model', required=False, help='Path to trained state_dict file', 
+                        default=TRAINED_MODEL_PATH)
+    parser.add_argument('--num-classes', required=False, type=int, help='number of classes', 
+                        default=21)
+    parser.add_argument('--image-path', required=True, help='path to COCO val2014 images dir')
+    parser.add_argument('--image-name-file', required=False, help='path to image name file', 
+                        default=IMAGE_NAME_FILE)
     parser.add_argument('--image-size', required=False, type=int)
+    parser.add_argument('--num-tests', required=False, type=int, default=5)
     return parser.parse_args()
 
 def load_images(im_path, names):
@@ -80,9 +88,17 @@ def test_model(args, phase, size):
     ssd_model = build_model(args, phase)
     ps, avg_sec = average_inference(ssd_model, resized_images)
 
-    print("Average per image(ms): %f, Average per image(s): %f, Average FPS: %f" 
-          % (avg_sec * 1000, avg_sec, 1 / avg_sec))
-    print("ps: " + str(list(map(lambda t: t[0], ps))))
+    return {'avg_per_image_ms': avg_sec * 1000, 'avg_per_image_s': avg_sec, 
+            'avg_fps': 1 / avg_sec, 'points': list(map(lambda t: t[0], ps))}
+
+def average_averages(args, phase, size, times, tm_func, ik):
+    totals = {}
+    for t in range(0, times):
+        out_m = tm_func(args=args, phase=phase, size=size)
+        totals = {k: totals[k] + out_m[k] if k in totals else 0.0\
+                  for k in set(out_m).difference(ik)}
+
+    return {k: totals[k] / times for k in totals}
 
 def set_default_tensor_type():
     if torch.cuda.is_available():
@@ -90,8 +106,18 @@ def set_default_tensor_type():
     else:
         print("ERROR: cuda is not available. Test will exit.")
 
+def print_output(args, out_data):
+    print("\n\nFrames Per Second result for SSD, averaged over %d runs:" % (args.num_tests))
+    for k, v in out_data.items():
+        print("%s = %f" % (str(k).ljust(25), v))
+    print("\n\n")
+
 if __name__ == '__main__':
     set_default_tensor_type()
     args = parse_args()
-    test_model(args, PHASE, int(args.image_size) if args.image_size else IMAGE_SIZE)
+
+    avgs = average_averages(args=args, phase=PHASE, size=IMAGE_SIZE, 
+                            times=args.num_tests, tm_func=test_model, ik={'points'})
+
+    print_output(args=args, out_data=avgs)
  
