@@ -1,2 +1,4 @@
 */*/repo
 models/ssd/ssd.pytorch
+models/cornernet/CornerNet
+*pkl

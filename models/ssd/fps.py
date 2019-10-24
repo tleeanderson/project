@@ -29,7 +29,7 @@ def parse_args():
     parser.add_argument('--image-name-file', required=False, help='path to image name file', 
                         default=IMAGE_NAME_FILE)
     parser.add_argument('--image-size', required=False, type=int)
-    parser.add_argument('--num-tests', required=False, type=int, default=5)
+    parser.add_argument('--num-tests', required=False, type=int, default=10)
     return parser.parse_args()
 
 def load_images(im_path, names):
