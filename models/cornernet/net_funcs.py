@@ -4,15 +4,26 @@ import os
 import cv2
 import sys
 
+#sys.path.append('cornernet/CornerNet')
 sys.path.append('./CornerNet')
 from external.nms import soft_nms, soft_nms_merge
+from utils import crop_image, normalize_
+
+def _rescale_dets(detections, ratios, borders, sizes):
+    xs, ys = detections[..., 0:4:2], detections[..., 1:4:2]
+    xs    /= ratios[:, 1][:, None, None]
+    ys    /= ratios[:, 0][:, None, None]
+    xs    -= borders[:, 2][:, None, None]
+    ys    -= borders[:, 0][:, None, None]
+    np.clip(xs, 0, sizes[:, 1][:, None, None], out=xs)
+    np.clip(ys, 0, sizes[:, 0][:, None, None], out=ys)
 
 def kp_decode(nnet, images, K, ae_threshold=0.5, kernel=3):
     detections = nnet.test([images], ae_threshold=ae_threshold, K=K, kernel=kernel)
     detections = detections.data.cpu().numpy()
     return detections
 
-def inference(dataset, nnet, image_file, decode_func=kp_decode):
+def inference(dataset, nnet, image, decode_func=kp_decode):
     K = dataset.configs["top_k"]
     ae_threshold = dataset.configs["ae_threshold"]
     nms_kernel = dataset.configs["nms_kernel"]
@@ -29,7 +40,7 @@ def inference(dataset, nnet, image_file, decode_func=kp_decode):
     }[dataset.configs["nms_algorithm"]]
 
     top_bboxes = {}
-    image = cv2.imread(image_file)
+    #image = cv2.imread(image_file)
     height, width = image.shape[0:2]
     detections = []
     for scale in scales:
@@ -83,25 +94,45 @@ def inference(dataset, nnet, image_file, decode_func=kp_decode):
     detections = detections[keep_inds]
     classes    = classes[keep_inds]
 
-    top_bboxes[image_id] = {}
+    top_bboxes = {}
     for j in range(categories):
         keep_inds = (classes == j)
-        top_bboxes[image_id][j + 1] = detections[keep_inds][:, 0:7].astype(np.float32)
+        top_bboxes[j + 1] = detections[keep_inds][:, 0:7].astype(np.float32)
         if merge_bbox:
-            soft_nms_merge(top_bboxes[image_id][j + 1], Nt=nms_threshold, 
-                           method=nms_algorithm, weight_exp=weight_exp)
+            soft_nms_merge(top_bboxes[j + 1], Nt=nms_threshold, method=nms_algorithm,
+                           weight_exp=weight_exp)
         else:
-            soft_nms(top_bboxes[image_id][j + 1], Nt=nms_threshold, method=nms_algorithm)
-        top_bboxes[image_id][j + 1] = top_bboxes[image_id][j + 1][:, 0:5]
+            soft_nms(top_bboxes[j + 1], Nt=nms_threshold, method=nms_algorithm)
+        top_bboxes[j + 1] = top_bboxes[j + 1][:, 0:5]
 
-    scores = np.hstack([
-        top_bboxes[image_id][j][:, -1] 
-        for j in range(1, categories + 1)
-    ])
+    scores = np.hstack([top_bboxes[j][:, -1] for j in range(1, categories + 1)])
     if len(scores) > max_per_image:
         kth    = len(scores) - max_per_image
         thresh = np.partition(scores, kth)[kth]
         for j in range(1, categories + 1):
-            keep_inds = (top_bboxes[image_id][j][:, -1] >= thresh)
-            top_bboxes[image_id][j] = top_bboxes[image_id][j][keep_inds]
+            keep_inds     = (top_bboxes[j][:, -1] >= thresh)
+            top_bboxes[j] = top_bboxes[j][keep_inds]
     return top_bboxes
+
+    # top_bboxes[image_id] = {}
+    # for j in range(categories):
+    #     keep_inds = (classes == j)
+    #     top_bboxes[image_id][j + 1] = detections[keep_inds][:, 0:7].astype(np.float32)
+    #     if merge_bbox:
+    #         soft_nms_merge(top_bboxes[image_id][j + 1], Nt=nms_threshold, 
+    #                        method=nms_algorithm, weight_exp=weight_exp)
+    #     else:
+    #         soft_nms(top_bboxes[image_id][j + 1], Nt=nms_threshold, method=nms_algorithm)
+    #     top_bboxes[image_id][j + 1] = top_bboxes[image_id][j + 1][:, 0:5]
+
+    # scores = np.hstack([
+    #     top_bboxes[image_id][j][:, -1] 
+    #     for j in range(1, categories + 1)
+    # ])
+    # if len(scores) > max_per_image:
+    #     kth    = len(scores) - max_per_image
+    #     thresh = np.partition(scores, kth)[kth]
+    #     for j in range(1, categories + 1):
+    #         keep_inds = (top_bboxes[image_id][j][:, -1] >= thresh)
+    #         top_bboxes[image_id][j] = top_bboxes[image_id][j][keep_inds]
+    # return top_bboxes

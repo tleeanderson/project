@@ -8,16 +8,19 @@ import shutil
 import importlib
 import net_funcs as nf
 import time
+from torch.autograd import Variable
+import numpy as np
 
-CURRENT_DIR = './'
-MODEL = 'CornerNet'
-MODEL_PATH = path.join(CURRENT_DIR, MODEL)
-sys.path.append(path.abspath(MODEL_PATH))
+MODEL_PATH = './CornerNet'
+sys.path.append(MODEL_PATH)
 from config import system_configs
 from db.datasets import datasets
-
 from nnet.py_factory import NetworkFactory
 
+sys.path.append('..')
+import common as com
+
+SIZE = 512
 SPLIT = 'testing'
 DB = 'db'
 IMAGE_SIZE = 300
@@ -25,9 +28,9 @@ IMAGE_NAME_FILE = 'top_600.txt'
 TRAINED_MODEL_DIR = './weights'
 TRAINED_MODEL_FN = 'CornerNet_500000.pkl'
 TRAINED_MODEL_PATH = path.join(TRAINED_MODEL_DIR, TRAINED_MODEL_FN)
-TEST_DEV_ANNOS = 'data/coco/annotations/'
+TEST_DEV_ANNOS = './data/coco/annotations/'
 TEST_DEV_ANNOS_FN = 'instances_testdev2017.json'
-TEST_DEV_PATH = path.join(CURRENT_DIR, path.join(TEST_DEV_ANNOS, TEST_DEV_ANNOS_FN))
+TEST_DEV_PATH = path.join(TEST_DEV_ANNOS, TEST_DEV_ANNOS_FN)
 CACHE_PATH = './cache/nnet/CornerNet'
 
 def parse_args():
@@ -56,30 +59,43 @@ def make_dirs(dirs):
     list(map(lambda d: os.makedirs(d, exist_ok=True), 
              list(filter(lambda d: not path.exists(d), dirs))))
 
-def create_net(dataset):
+def build_model(dataset):
     corner_net = NetworkFactory(dataset)
     corner_net.load_params(system_configs.max_iter)
     corner_net.cuda()
     corner_net.eval_mode()
 
-    return corner_net
+    return corner_net   
 
-def inference(dataset, nnet, image):
+def time_model(model, data, dataset):
     start = time.time()
-    nf.inference(dataset=dataset, nnet=nnet, image_file=image)
+    out = nf.inference(dataset=dataset, nnet=model, image=data)
     end = time.time()
+    
+    return end - start, out
 
-    return (end - start) * 1000
+def average_inference(model, im_data, dataset):
+    points = []
+    for i, img in enumerate(im_data):
+        if i % 50 == 0:
+            print("on image: %d" % (i + 1))
+        points.append(time_model(model=model, dataset=dataset, data=img))
 
-def test_model():
-    pass
+    return points, np.average(list(map(lambda t: t[0], points)))
+
+def test_model(args, size, model, dataset):
+    images, nf = com.load_images(args.image_path, 
+                         com.process_file_names(com.read_file(args.image_name_file)))
+    ps, avg_sec = average_inference(model=model, im_data=images, dataset=dataset)
+    return {'avg_per_image_ms': avg_sec * 1000, 'avg_per_image_s': avg_sec, 
+            'avg_fps': 1 / avg_sec, 'points': list(map(lambda t: t[0], ps))}
 
 if __name__ == '__main__':
     args = parse_args()
 
     #prepare dirs
-    make_dirs([path.join(CURRENT_DIR, TEST_DEV_ANNOS), CACHE_PATH])
-    shutil.copy(path.join(CURRENT_DIR, TEST_DEV_ANNOS_FN), TEST_DEV_PATH)
+    make_dirs([TEST_DEV_ANNOS, CACHE_PATH])
+    shutil.copy(path.join('./', TEST_DEV_ANNOS_FN), TEST_DEV_PATH)
     shutil.copy(TRAINED_MODEL_PATH, CACHE_PATH)
 
     model_config_path = args.model_config + args.suffix
@@ -89,7 +105,9 @@ if __name__ == '__main__':
     system_configs.update_config(config['system'])
 
     test_dataset = datasets[system_configs.dataset](config[DB], system_configs.test_split)
-    net = create_net(dataset=test_dataset)
+    net = build_model(dataset=test_dataset)
     
-    #inference(dataset=test_dataset, nnet=net, )
+    out = test_model(args=args, size=SIZE, model=net, dataset=test_dataset)
+
+    print(out)
     
