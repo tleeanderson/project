@@ -45,14 +45,13 @@ def build_model(dataset):
     corner_net.cuda()
     corner_net.eval_mode()
 
-    return corner_net   
+    return corner_net
 
 def time_model(model, data, dataset):
-    start = time.time()
-    out = net_funcs.inference(dataset=dataset, nnet=model, image=data)
-    end = time.time()
-    
-    return end - start, out
+    return com.time_inference(inference_func=net_funcs.inference, 
+                              inference_func_args={'dataset': dataset, 
+                                                   'nnet': model, 
+                                                   'image': data})
 
 def average_inference(model, im_data, dataset, tm_func=time_model):
     points = []
@@ -67,8 +66,8 @@ def test_model(args, size, model, dataset):
     images, nf = com.load_images(args.image_path, 
                          com.process_file_names(com.read_file(args.image_name_file)))
     resized_images = com.resize_images(size=size, images=images)
-    return com.test_model(inference_func=average_inference, 
-                          inference_func_args={'model': model, 'im_data': resized_images, 
+    return com.test_model(avg_inference_func=average_inference, 
+                          avg_inference_func_args={'model': model, 'im_data': resized_images, 
                                                'dataset': dataset})
 
 def average_averages(args, size, model, dataset, times, ik):

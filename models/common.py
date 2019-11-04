@@ -3,6 +3,7 @@ import cv2
 import torch
 import argparse
 import json
+import time
 
 IMAGE_NAME_FILE = 'top_600.txt'
 
@@ -48,6 +49,13 @@ def load_images(im_path, names):
             images.append(im)
     return images, nf
 
+def time_inference(inference_func, inference_func_args):
+    start = time.time()
+    out = inference_func(**inference_func_args)
+    end = time.time()
+
+    return end - start, out
+
 def average_averages(times, ik, tm_func, tm_args):
     totals = {}
     for t in range(1, times + 1):
@@ -58,8 +66,8 @@ def average_averages(times, ik, tm_func, tm_args):
 
     return {k: totals[k] / times for k in totals}
 
-def test_model(inference_func, inference_func_args):
-    ps, avg_sec = inference_func(**inference_func_args)
+def test_model(avg_inference_func, avg_inference_func_args):
+    ps, avg_sec = avg_inference_func(**avg_inference_func_args)
     return {'avg_per_image_ms': avg_sec * 1000, 'avg_per_image_s': avg_sec, 
             'avg_fps': 1 / avg_sec, 'points': list(map(lambda t: t[0], ps))}
 
