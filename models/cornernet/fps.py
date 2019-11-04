@@ -61,8 +61,8 @@ def test_model(args, size, model, dataset):
                                                    'dataset': dataset})
 
 def average_averages(args, size, model, dataset, times, ik):
-    return common.average_averages(times=times, ik=ik, tm_func=test_model, 
-                                tm_args={'args': args, 'size': size, 'model': model, 
+    return common.average_averages(times=times, ik=ik, test_model_func=test_model, 
+                                test_model_args={'args': args, 'size': size, 'model': model, 
                                          'dataset': dataset})
 
 def prepare_dirs():
