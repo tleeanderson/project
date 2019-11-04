@@ -1,13 +1,9 @@
 import torch
-import argparse
 import os.path as path
 import sys
-import json
-import os
 import shutil
 import importlib
 import net_funcs
-import time
 from torch.autograd import Variable
 import numpy as np
 
@@ -22,7 +18,6 @@ import common
 
 NET_NAME = 'CornerNet512'
 IMAGE_SIZE = 512
-SPLIT = 'testing'
 DB = 'db'
 TRAINED_MODEL_DIR = './weights'
 TRAINED_MODEL_FN = 'CornerNet_500000.pkl'
