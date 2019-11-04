@@ -39,7 +39,7 @@ def prepare_images(images, size):
     return [torch.from_numpy(i).unsqueeze(0)\
             .reshape((1, 3, size, size)).float() for i in images]
 
-def load_images(im_path, names):
+def images_from_disk(im_path, names):
     images, nf = [], []
     for n in names:
         p = path.join(im_path, n)
@@ -57,11 +57,11 @@ def time_inference(inference_func, inference_func_args):
 
     return end - start, out
 
-def average_averages(times, ik, tm_func, tm_args):
+def average_averages(times, ik, test_model_func, test_model_args):
     totals = {}
     for t in range(1, times + 1):
         print("On test number %d" % (t))
-        out_m = tm_func(**tm_args)
+        out_m = test_model_func(**test_model_args)
         totals = {k: totals[k] + out_m[k] if k in totals else out_m[k]\
                   for k in set(out_m).difference(set(ik))}
 
@@ -76,6 +76,14 @@ def test_model(im_data, inference_func, inference_func_args):
     avg_sec = np.average(list(map(lambda t: t[0], points)))
     return {'avg_per_image_ms': avg_sec * 1000, 'avg_per_image_s': avg_sec, 
             'avg_fps': 1 / avg_sec, 'points': list(map(lambda t: t[0], points))}
+
+def read_images(image_name_file, image_path, size):
+    images, nf = images_from_disk(im_path=image_path, 
+                             names=process_file_names(read_file(image_name_file)))
+    for p in nf:
+        print("ERROR: Could not find {}".format(p))
+    resized_images = resize_images(size=size, images=images)
+    return resized_images
 
 def print_output(args, out_data, model_name):
     print('out_data ' + str(out_data))

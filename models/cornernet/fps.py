@@ -54,10 +54,9 @@ def inference(model, dataset, image):
                                                    'image': image})
 
 def test_model(args, size, model, dataset):
-    images, nf = common.load_images(args.image_path, 
-                         common.process_file_names(common.read_file(args.image_name_file)))
-    resized_images = common.resize_images(size=size, images=images)
-    return common.test_model(im_data=resized_images, inference_func=inference,
+    images = common.read_images(image_name_file=args.image_name_file, 
+                                image_path=args.image_path, size=size)
+    return common.test_model(im_data=images, inference_func=inference,
                              inference_func_args={'model': model,
                                                    'dataset': dataset})
 
