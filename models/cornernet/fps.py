@@ -63,13 +63,13 @@ def average_inference(model, im_data, dataset, tm_func=time_model):
 
     return points, np.average(list(map(lambda t: t[0], points)))
 
-def test_model(args, size, model, dataset, inf_func=average_inference):
+def test_model(args, size, model, dataset):
     images, nf = com.load_images(args.image_path, 
                          com.process_file_names(com.read_file(args.image_name_file)))
     resized_images = com.resize_images(size=size, images=images)
-    ps, avg_sec = inf_func(model=model, im_data=resized_images, dataset=dataset)
-    return {'avg_per_image_ms': avg_sec * 1000, 'avg_per_image_s': avg_sec, 
-            'avg_fps': 1 / avg_sec, 'points': list(map(lambda t: t[0], ps))}
+    return com.test_model(inference_func=average_inference, 
+                          inference_func_args={'model': model, 'im_data': resized_images, 
+                                               'dataset': dataset})
 
 def average_averages(args, size, model, dataset, times, ik):
     return com.average_averages(times=times, ik=ik, tm_func=test_model, 

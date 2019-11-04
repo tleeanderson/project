@@ -58,6 +58,11 @@ def average_averages(times, ik, tm_func, tm_args):
 
     return {k: totals[k] / times for k in totals}
 
+def test_model(inference_func, inference_func_args):
+    ps, avg_sec = inference_func(**inference_func_args)
+    return {'avg_per_image_ms': avg_sec * 1000, 'avg_per_image_s': avg_sec, 
+            'avg_fps': 1 / avg_sec, 'points': list(map(lambda t: t[0], ps))}
+
 def print_output(args, out_data, model_name):
     print('out_data ' + str(out_data))
     print("\n\nFrames Per Second result for %s, averaged over %d runs:" 
