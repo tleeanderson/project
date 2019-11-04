@@ -4,6 +4,7 @@ import torch
 import argparse
 import json
 import time
+import numpy as np
 
 IMAGE_NAME_FILE = 'top_600.txt'
 
@@ -66,10 +67,15 @@ def average_averages(times, ik, tm_func, tm_args):
 
     return {k: totals[k] / times for k in totals}
 
-def test_model(avg_inference_func, avg_inference_func_args):
-    ps, avg_sec = avg_inference_func(**avg_inference_func_args)
+def test_model(im_data, inference_func, inference_func_args):
+    points = []
+    for i, img in enumerate(im_data):
+        if i % 50 == 0:
+            print("on image: %d" % (i + 1))
+        points.append(inference_func(image=img, **inference_func_args))
+    avg_sec = np.average(list(map(lambda t: t[0], points)))
     return {'avg_per_image_ms': avg_sec * 1000, 'avg_per_image_s': avg_sec, 
-            'avg_fps': 1 / avg_sec, 'points': list(map(lambda t: t[0], ps))}
+            'avg_fps': 1 / avg_sec, 'points': list(map(lambda t: t[0], points))}
 
 def print_output(args, out_data, model_name):
     print('out_data ' + str(out_data))
