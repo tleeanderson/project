@@ -4,7 +4,6 @@ import os
 import cv2
 import sys
 
-#sys.path.append('cornernet/CornerNet')
 sys.path.append('./CornerNet')
 from external.nms import soft_nms, soft_nms_merge
 from utils import crop_image, normalize_
@@ -40,7 +39,6 @@ def inference(dataset, nnet, image, decode_func=kp_decode):
     }[dataset.configs["nms_algorithm"]]
 
     top_bboxes = {}
-    #image = cv2.imread(image_file)
     height, width = image.shape[0:2]
     detections = []
     for scale in scales:
@@ -113,26 +111,3 @@ def inference(dataset, nnet, image, decode_func=kp_decode):
             keep_inds     = (top_bboxes[j][:, -1] >= thresh)
             top_bboxes[j] = top_bboxes[j][keep_inds]
     return top_bboxes
-
-    # top_bboxes[image_id] = {}
-    # for j in range(categories):
-    #     keep_inds = (classes == j)
-    #     top_bboxes[image_id][j + 1] = detections[keep_inds][:, 0:7].astype(np.float32)
-    #     if merge_bbox:
-    #         soft_nms_merge(top_bboxes[image_id][j + 1], Nt=nms_threshold, 
-    #                        method=nms_algorithm, weight_exp=weight_exp)
-    #     else:
-    #         soft_nms(top_bboxes[image_id][j + 1], Nt=nms_threshold, method=nms_algorithm)
-    #     top_bboxes[image_id][j + 1] = top_bboxes[image_id][j + 1][:, 0:5]
-
-    # scores = np.hstack([
-    #     top_bboxes[image_id][j][:, -1] 
-    #     for j in range(1, categories + 1)
-    # ])
-    # if len(scores) > max_per_image:
-    #     kth    = len(scores) - max_per_image
-    #     thresh = np.partition(scores, kth)[kth]
-    #     for j in range(1, categories + 1):
-    #         keep_inds = (top_bboxes[image_id][j][:, -1] >= thresh)
-    #         top_bboxes[image_id][j] = top_bboxes[image_id][j][keep_inds]
-    # return top_bboxes

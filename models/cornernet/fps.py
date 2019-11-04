@@ -6,7 +6,7 @@ import json
 import os
 import shutil
 import importlib
-import net_funcs as nf
+import net_funcs
 import time
 from torch.autograd import Variable
 import numpy as np
@@ -69,7 +69,7 @@ def build_model(dataset):
 
 def time_model(model, data, dataset):
     start = time.time()
-    out = nf.inference(dataset=dataset, nnet=model, image=data)
+    out = net_funcs.inference(dataset=dataset, nnet=model, image=data)
     end = time.time()
     
     return end - start, out
@@ -86,28 +86,43 @@ def average_inference(model, im_data, dataset):
 def test_model(args, size, model, dataset):
     images, nf = com.load_images(args.image_path, 
                          com.process_file_names(com.read_file(args.image_name_file)))
-    ps, avg_sec = average_inference(model=model, im_data=images, dataset=dataset)
+    resized_images = com.resize_images(size=size, images=images)
+    ps, avg_sec = average_inference(model=model, im_data=resized_images, dataset=dataset)
     return {'avg_per_image_ms': avg_sec * 1000, 'avg_per_image_s': avg_sec, 
             'avg_fps': 1 / avg_sec, 'points': list(map(lambda t: t[0], ps))}
 
-if __name__ == '__main__':
-    args = parse_args()
+def average_averages(args, size, model, dataset, times, ik, tm_func=test_model):
+    totals = {}
+    for t in range(1, times + 1):
+        print("On test number %d" % (t))
+        out_m = tm_func(args=args, size=size, model=model, dataset=dataset)
+        totals = {k: totals[k] + out_m[k] if k in totals else 0.0\
+                  for k in set(out_m).difference(set(ik))}
 
-    #prepare dirs
+    return {k: totals[k] / times for k in totals}
+
+def prepare_dirs():
     make_dirs([TEST_DEV_ANNOS, CACHE_PATH])
     shutil.copy(path.join('./', TEST_DEV_ANNOS_FN), TEST_DEV_PATH)
     shutil.copy(TRAINED_MODEL_PATH, CACHE_PATH)
 
+def create_config(args):
     model_config_path = args.model_config + args.suffix
     config_fp = path.join(MODEL_PATH, path.join(system_configs.config_dir, model_config_path))
     config = read_json_file(path=config_fp)
     config['system']['snapshot_name'] = args.model_config
     system_configs.update_config(config['system'])
-
     test_dataset = datasets[system_configs.dataset](config[DB], system_configs.test_split)
-    net = build_model(dataset=test_dataset)
-    
-    out = test_model(args=args, size=SIZE, model=net, dataset=test_dataset)
 
-    print(out)
+    return config, test_dataset
+
+if __name__ == '__main__':
+    args = parse_args()
+    prepare_dirs()
+    config, test_dataset = create_config(args=args)
+    net = build_model(dataset=test_dataset)
+    out = average_averages(args=args, size=size, model=net, dataset=test_dataset,
+                           times=args.num_tests, ik={'points'})
+    com.print_output(args=args, out_data=out, model_name='CornerNet512') 
+
     

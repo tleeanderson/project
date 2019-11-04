@@ -28,3 +28,10 @@ def load_images(im_path, names):
         else:
             images.append(im)
     return images, nf
+
+def print_output(args, out_data, model_name):
+    print("\n\nFrames Per Second result for %s, averaged over %d runs:" 
+          % (str(model_name), args.num_tests))
+    for k, v in out_data.items():
+        print("%s = %f" % (str(k).ljust(25), v))
+    print("\n\n")
