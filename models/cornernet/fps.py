@@ -20,11 +20,10 @@ from nnet.py_factory import NetworkFactory
 sys.path.append('..')
 import common as com
 
-SIZE = 512
+NET_NAME = 'CornerNet512'
+IMAGE_SIZE = 512
 SPLIT = 'testing'
 DB = 'db'
-IMAGE_SIZE = 300
-IMAGE_NAME_FILE = 'top_600.txt'
 TRAINED_MODEL_DIR = './weights'
 TRAINED_MODEL_FN = 'CornerNet_500000.pkl'
 TRAINED_MODEL_PATH = path.join(TRAINED_MODEL_DIR, TRAINED_MODEL_FN)
@@ -34,30 +33,11 @@ TEST_DEV_PATH = path.join(TEST_DEV_ANNOS, TEST_DEV_ANNOS_FN)
 CACHE_PATH = './cache/nnet/CornerNet'
 
 def parse_args():
-    parser = argparse.ArgumentParser(description='Measure FPS of CornerNet')
-
-    parser.add_argument('--trained-model', required=False, help='Path to trained state_dict file', 
-                        default=TRAINED_MODEL_PATH)
-    parser.add_argument('--num-classes', required=False, type=int, help='number of classes', 
-                        default=81)
-    parser.add_argument('--image-path', required=True, help='path to COCO val2014 images dir')
-    parser.add_argument('--image-name-file', required=False, help='path to image name file', 
-                        default=IMAGE_NAME_FILE)
-    parser.add_argument('--image-size', required=False, type=int)
-    parser.add_argument('--num-tests', required=False, type=int, default=10)
+    parser = com.default_args(net_name=NET_NAME, trained_model_path=TRAINED_MODEL_PATH, 
+                              num_classes=81, image_size=IMAGE_SIZE)
     parser.add_argument('--model-config', required=False, default='CornerNet')
     parser.add_argument('--suffix', required=False, default='.json')
     return parser.parse_args()
-
-def read_json_file(path):
-    with open(path) as f:
-        data = json.load(f)
-    
-    return data
-
-def make_dirs(dirs):
-    list(map(lambda d: os.makedirs(d, exist_ok=True), 
-             list(filter(lambda d: not path.exists(d), dirs))))
 
 def build_model(dataset):
     corner_net = NetworkFactory(dataset)
@@ -74,42 +54,37 @@ def time_model(model, data, dataset):
     
     return end - start, out
 
-def average_inference(model, im_data, dataset):
+def average_inference(model, im_data, dataset, tm_func=time_model):
     points = []
     for i, img in enumerate(im_data):
         if i % 50 == 0:
             print("on image: %d" % (i + 1))
-        points.append(time_model(model=model, dataset=dataset, data=img))
+        points.append(tm_func(model=model, dataset=dataset, data=img))
 
     return points, np.average(list(map(lambda t: t[0], points)))
 
-def test_model(args, size, model, dataset):
+def test_model(args, size, model, dataset, inf_func=average_inference):
     images, nf = com.load_images(args.image_path, 
                          com.process_file_names(com.read_file(args.image_name_file)))
     resized_images = com.resize_images(size=size, images=images)
-    ps, avg_sec = average_inference(model=model, im_data=resized_images, dataset=dataset)
+    ps, avg_sec = inf_func(model=model, im_data=resized_images, dataset=dataset)
     return {'avg_per_image_ms': avg_sec * 1000, 'avg_per_image_s': avg_sec, 
             'avg_fps': 1 / avg_sec, 'points': list(map(lambda t: t[0], ps))}
 
-def average_averages(args, size, model, dataset, times, ik, tm_func=test_model):
-    totals = {}
-    for t in range(1, times + 1):
-        print("On test number %d" % (t))
-        out_m = tm_func(args=args, size=size, model=model, dataset=dataset)
-        totals = {k: totals[k] + out_m[k] if k in totals else 0.0\
-                  for k in set(out_m).difference(set(ik))}
-
-    return {k: totals[k] / times for k in totals}
+def average_averages(args, size, model, dataset, times, ik):
+    return com.average_averages(times=times, ik=ik, tm_func=test_model, 
+                                tm_args={'args': args, 'size': size, 'model': model, 
+                                         'dataset': dataset})
 
 def prepare_dirs():
-    make_dirs([TEST_DEV_ANNOS, CACHE_PATH])
+    com.make_dirs([TEST_DEV_ANNOS, CACHE_PATH])
     shutil.copy(path.join('./', TEST_DEV_ANNOS_FN), TEST_DEV_PATH)
     shutil.copy(TRAINED_MODEL_PATH, CACHE_PATH)
 
 def create_config(args):
     model_config_path = args.model_config + args.suffix
     config_fp = path.join(MODEL_PATH, path.join(system_configs.config_dir, model_config_path))
-    config = read_json_file(path=config_fp)
+    config = com.read_json_file(path=config_fp)
     config['system']['snapshot_name'] = args.model_config
     system_configs.update_config(config['system'])
     test_dataset = datasets[system_configs.dataset](config[DB], system_configs.test_split)
@@ -121,8 +96,8 @@ if __name__ == '__main__':
     prepare_dirs()
     config, test_dataset = create_config(args=args)
     net = build_model(dataset=test_dataset)
-    out = average_averages(args=args, size=size, model=net, dataset=test_dataset,
+    out = average_averages(args=args, size=IMAGE_SIZE, model=net, dataset=test_dataset,
                            times=args.num_tests, ik={'points'})
-    com.print_output(args=args, out_data=out, model_name='CornerNet512') 
+    com.print_output(args=args, out_data=out, model_name=NET_NAME) 
 
     
