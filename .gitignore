@@ -1,6 +1,7 @@
 */*/repo
 models/ssd/ssd.pytorch
 models/cornernet/CornerNet
+models/cornernet_lite/CornerNet-Lite/
 *pkl
 *pyc
 __pycache__
