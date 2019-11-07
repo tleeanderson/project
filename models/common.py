@@ -6,7 +6,7 @@ import json
 import time
 import numpy as np
 
-IMAGE_NAME_FILE = 'top_600.txt'
+IMAGE_NAME_FILE = '../top_600.txt'
 
 def default_args(net_name, trained_model_path, num_classes, image_size, 
                  num_tests=10, image_name_file=IMAGE_NAME_FILE):
