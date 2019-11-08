@@ -4,3 +4,4 @@ models/cornernet_lite/CornerNet_Lite/
 *pkl
 *pyc
 __pycache__
+pretrained
