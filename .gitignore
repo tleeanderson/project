@@ -1,5 +1,4 @@
 models/ssd/ssd.pytorch
-models/cornernet/CornerNet
 models/cornernet_lite/CornerNet_Lite/
 *pkl
 *pyc
