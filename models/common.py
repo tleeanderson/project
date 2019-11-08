@@ -7,12 +7,11 @@ import time
 import numpy as np
 
 IMAGE_NAME_FILE = '../top_600.txt'
+KEY_IGNORE_SET = {'points'}
 
-def default_args(net_name, trained_model_path, num_classes, image_size, 
+def default_args(net_name, num_classes, image_size, 
                  num_tests=10, image_name_file=IMAGE_NAME_FILE):
     parser = argparse.ArgumentParser(description="Measure FPS of {}".format(net_name))
-    parser.add_argument('--trained-model', required=False, help='Path to trained state_dict file', 
-                        default=trained_model_path)
     parser.add_argument('--num-classes', required=False, type=int, help='number of classes', 
                         default=num_classes)
     parser.add_argument('--image-path', required=True, help='path to COCO val2014 images dir')
@@ -57,7 +56,7 @@ def time_inference(inference_func, inference_func_args):
 
     return end - start, out
 
-def average_averages(times, ik, test_model_func, test_model_args):
+def average_averages(times, test_model_func, test_model_args, ik=KEY_IGNORE_SET):
     totals = {}
     for t in range(1, times + 1):
         print("On test number %d" % (t))

@@ -17,8 +17,10 @@ TRAINED_MODEL_FN = 'ssd300_mAP_77.43_v2.pth'
 TRAINED_MODEL_PATH = path.join(TRAINED_MODEL_DIR, TRAINED_MODEL_FN)
 
 def parse_args():
-    parser = common.default_args(net_name=NET_NAME, trained_model_path=TRAINED_MODEL_PATH, 
-                        num_classes=21, image_size=IMAGE_SIZE)
+    parser = common.default_args(net_name=NET_NAME, 
+                                 num_classes=21, image_size=IMAGE_SIZE)
+    parser.add_argument('--trained-model', required=False, help='Path to trained state_dict file', 
+                         default=TRAINED_MODEL_PATH)
     return parser.parse_args()
 
 def build_model(args, phase, size):
@@ -42,8 +44,8 @@ def test_model(args, size, model):
     return common.test_model(im_data=images, inference_func=inference, 
                           inference_func_args={'model': model})
 
-def average_averages(args, phase, size, times, ik, model):
-    return common.average_averages(times=times, ik=ik, test_model_func=test_model, 
+def average_averages(args, phase, size, times, model):
+    return common.average_averages(times=times, test_model_func=test_model, 
                                    test_model_args={'args': args, 'size': size, 
                                                     'model': model})
 
@@ -59,7 +61,7 @@ if __name__ == '__main__':
 
     model = build_model(args=args, phase=PHASE, size=IMAGE_SIZE)
     avgs = average_averages(args=args, phase=PHASE, size=IMAGE_SIZE, 
-                            times=args.num_tests, ik={'points'}, model=model)
+                            times=args.num_tests, model=model)
 
     common.print_output(args=args, out_data=avgs, model_name=NET_NAME + str(IMAGE_SIZE))
  
