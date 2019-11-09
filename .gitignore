@@ -1,3 +1,4 @@
+models/retina_net/Retina_Net
 models/ssd/ssd.pytorch
 models/cornernet_lite/CornerNet_Lite/
 *pkl
