@@ -1,15 +1,14 @@
 #!/bin/bash
-GIT_PROJECT=pytorch-retinanet
-PROJECT=Retina_Net
+GIT_PROJECT=keras-retinanet
+PROJECT=keras_retina_net
 
 if [ ! -d $PROJECT ]; then
   echo "Pulling down $GIT_PROJECT project..."
-  git clone git@github.com:yhenon/$GIT_PROJECT.git $PROJECT
+  git clone git@github.com:fizyr/$GIT_PROJECT.git $PROJECT
 else
-  echo "$PROJECT exists, nothing to do, exiting"
+  echo "$PROJECT_NAME exists, will not pull from github"
 fi
 
-echo "building non max suppression"
-cd $PROJECT/lib
-bash build.sh
-cd -
+cd $PROJECT
+pip3 install . --user
+pip3 install keras-resnet --user
