@@ -14,7 +14,7 @@ IMAGE_SIZE = 512
 
 def parse_args():
     parser = common.default_args(net_name=NET_NAME, num_classes=81, image_size=IMAGE_SIZE)
-    parser.add_argument('--pretrained-model', default=MODEL_PATH)
+    parser.add_argument('--model-path', default=MODEL_PATH)
 
     return parser.parse_args()
 
@@ -40,6 +40,7 @@ def average_averages(args, size, model):
 if __name__ == '__main__':
     args = parse_args()
     model = build_model(path=MODEL_PATH)
+    model.summary()
     avgs = average_averages(args=args, size=IMAGE_SIZE, model=model)
     common.print_output(args=args, out_data=avgs, model_name=NET_NAME + str(IMAGE_SIZE))
     
