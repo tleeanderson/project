@@ -41,6 +41,6 @@ if __name__ == '__main__':
     args = parse_args()
     model = build_model(path=MODEL_PATH)
     model.summary()
-    avgs = average_averages(args=args, size=IMAGE_SIZE, model=model)
+    avgs = average_averages(args=args, size=args.image_size, model=model)
     common.print_output(args=args, out_data=avgs, model_name=NET_NAME + str(IMAGE_SIZE))
     

@@ -46,5 +46,5 @@ if __name__ == '__main__':
     args = parse_args()
     model = build_model(args.model, cn=CORNER_NET, 
                         cn_sac=CORNER_NET_SACCADE, cn_sq=CORNER_NET_SQUEEZE)
-    out = average_averages(args=args, size=IMAGE_SIZE, model=model)
+    out = average_averages(args=args, size=args.image_size, model=model)
     common.print_output(args=args, out_data=out, model_name=args.model)
