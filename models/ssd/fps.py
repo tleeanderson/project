@@ -39,20 +39,20 @@ def inference(model, image, batch_size):
                               inference_func_args={'x': image}, 
                                  batch_size=batch_size)
 
-def test_model(args, size, model, batch_size):
-    batches, remainder = common.batch_images(images=common.read_images(
-        image_name_file=args.image_name_file, image_path=args.image_path, size=size),
-                                             batch_size=batch_size)
-    images = common.prepare_images(images=batches, size=size, batch=batch_size)
+def read_data(args, size, batch_size):
+    batches = common.read_images_batch(args=args, size=size, batch_size=batch_size)
+    return common.prepare_images(images=batches, size=size, batch=batch_size)
+
+def test_model(images, model, batch_size):
     return common.test_model(im_data=images, inference_func=inference, 
                           inference_func_args={'model': model, 
                                                'batch_size': batch_size})
 
-def average_averages(args, phase, size, times, model, batch_size):
+def average_averages(size, times, model, batch_size, images):
     return common.average_averages(times=times, test_model_func=test_model, 
-                                   test_model_args={'args': args, 'size': size, 
-                                                    'model': model, 
-                                                    'batch_size': batch_size})
+                                   test_model_args={'model': model, 
+                                                    'batch_size': batch_size, 
+                                                    'images': images})
 
 def set_default_tensor_type():
     if torch.cuda.is_available():
@@ -65,9 +65,11 @@ if __name__ == '__main__':
     args = parse_args()
 
     model = build_model(args=args, phase=PHASE, size=IMAGE_SIZE)
-    avgs = average_averages(args=args, phase=PHASE, size=IMAGE_SIZE, 
+    images = read_data(args=args, size=IMAGE_SIZE, batch_size=args.batch_size)
+    avgs = average_averages(size=IMAGE_SIZE, 
                             times=args.num_tests, model=model, 
-                            batch_size=args.batch_size)
+                            batch_size=args.batch_size, 
+                            images=images)
 
     common.print_output(args=args, out_data=avgs, model_name=NET_NAME + str(IMAGE_SIZE))
  

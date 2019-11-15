@@ -25,7 +25,6 @@ def default_args(net_name, num_classes, image_size,
 def read_file(path):
     with open(path) as f:
         data = f.read()
-
     return data
 
 def process_file_names(data):
@@ -66,6 +65,15 @@ def average_averages(times, test_model_func, test_model_args, ik=KEY_IGNORE_SET)
 
     return {k: totals[k] / times for k in totals}
 
+def read_images_batch(args, size, batch_size):
+    images = read_images(image_name_file=args.image_name_file, 
+                                    image_path=args.image_path, size=size)
+    batches, remainder = batch_images(images=images,
+                                             batch_size=batch_size)
+    print("With {} images and batch size of {}, remainder is {}. These will be left out of computation."\
+          .format(len(images), batch_size, len(remainder)))
+    return batches
+
 def test_model(im_data, inference_func, inference_func_args):
     points = []
     for i, img in enumerate(im_data):
@@ -93,8 +101,7 @@ def batch_images(images, batch_size):
     return result, images[images.shape[0]-remainder:]
 
 def log_remainder(remainder, batch_size, total):
-    print("With {} images and batch size of {}, remainder is {}. \n These will be left out of computation"\
-          .format(total, batch_size, remainder))
+    
     return images
 
 def print_output(args, out_data, model_name):
