@@ -34,11 +34,7 @@ def process_file_names(data):
 def resize_images(size, images):
     return [cv2.resize(i, (size, size)) for i in images]
 
-def prepare_images(images, size):
-    return [torch.from_numpy(i).unsqueeze(0)\
-            .reshape((1, 3, size, size)).float() for i in images]
-
-def prepare_images_new(images, size, batch):
+def prepare_images(images, size, batch):
     return [torch.from_numpy(i).unsqueeze(0)\
             .reshape((batch, 3, size, size)).float() for i in images]
 
@@ -86,15 +82,20 @@ def read_images(image_name_file, image_path, size):
     for p in nf:
         print("ERROR: Could not find {}".format(p))
     resized_images = resize_images(size=size, images=images)
-    return resized_images
+    return np.asarray(resized_images)
 
-def batch_images(images, batch):
-    remainder = images.shape[0] % batch
-    batches = range(0, images.shape[0] + 1, batch)
+def batch_images(images, batch_size):
+    remainder = images.shape[0] % batch_size
+    batches = range(0, images.shape[0] + 1, batch_size)
     result = []
     for bs, be in zip(range(len(batches)), range(1, len(batches))):
         result.append(images[batches[bs]:batches[be]])
-    return result, images[-remainder]
+    return result, images[images.shape[0]-remainder:]
+
+def log_remainder(remainder, batch_size, total):
+    print("With {} images and batch size of {}, remainder is {}. \n These will be left out of computation"\
+          .format(total, batch_size, remainder))
+    return images
 
 def print_output(args, out_data, model_name):
     print('out_data ' + str(out_data))
