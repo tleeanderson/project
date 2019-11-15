@@ -19,7 +19,7 @@ def default_args(net_name, num_classes, image_size,
                         default=image_name_file)
     parser.add_argument('--image-size', required=False, type=int, default=image_size)
     parser.add_argument('--num-tests', required=False, type=int, default=num_tests)
-
+    parser.add_argument('--batch-size', type=int, default=1)
     return parser
 
 def read_file(path):
@@ -38,6 +38,10 @@ def prepare_images(images, size):
     return [torch.from_numpy(i).unsqueeze(0)\
             .reshape((1, 3, size, size)).float() for i in images]
 
+def prepare_images_new(images, size, batch):
+    return [torch.from_numpy(i).unsqueeze(0)\
+            .reshape((batch, 3, size, size)).float() for i in images]
+
 def images_from_disk(im_path, names):
     images, nf = [], []
     for n in names:
@@ -49,12 +53,12 @@ def images_from_disk(im_path, names):
             images.append(im)
     return images, nf
 
-def time_inference(inference_func, inference_func_args):
+def time_inference(inference_func, inference_func_args, batch_size):
     start = time.time()
     out = inference_func(**inference_func_args)
     end = time.time()
 
-    return end - start, out
+    return (end - start) / batch_size, out
 
 def average_averages(times, test_model_func, test_model_args, ik=KEY_IGNORE_SET):
     totals = {}
@@ -83,6 +87,14 @@ def read_images(image_name_file, image_path, size):
         print("ERROR: Could not find {}".format(p))
     resized_images = resize_images(size=size, images=images)
     return resized_images
+
+def batch_images(images, batch):
+    remainder = images.shape[0] % batch
+    batches = range(0, images.shape[0] + 1, batch)
+    result = []
+    for bs, be in zip(range(len(batches)), range(1, len(batches))):
+        result.append(images[batches[bs]:batches[be]])
+    return result, images[-remainder]
 
 def print_output(args, out_data, model_name):
     print('out_data ' + str(out_data))

@@ -2,6 +2,7 @@ import torch
 import os.path as path
 import sys
 from torch.autograd import Variable
+import numpy as np
 
 sys.path.append(path.abspath('./ssd.pytorch'))
 import ssd as model
@@ -31,11 +32,12 @@ def build_model(args, phase, size):
 
     return ssd_model
 
-def inference(model, image):
+def inference(model, image, batch_size):
     image = Variable(image)
     image = image.cuda()
     return common.time_inference(inference_func=model, 
-                              inference_func_args={'x': image})
+                              inference_func_args={'x': image}, 
+                                 batch_size=batch_size)
 
 def test_model(args, size, model):
     images = common.prepare_images(images=common.read_images(image_name_file=args.image_name_file, 
@@ -44,10 +46,20 @@ def test_model(args, size, model):
     return common.test_model(im_data=images, inference_func=inference, 
                           inference_func_args={'model': model})
 
-def average_averages(args, phase, size, times, model):
-    return common.average_averages(times=times, test_model_func=test_model, 
+def test_model_new(args, size, model, batch_size):
+    np_images = np.asarray(common.read_images(image_name_file=args.image_name_file, 
+                                image_path=args.image_path, size=size))
+    batches, remainder = common.batch_images(images=np_images, batch=batch_size)
+    images = common.prepare_images_new(images=batches, size=size, batch=batch_size)
+    return common.test_model(im_data=images, inference_func=inference, 
+                          inference_func_args={'model': model, 
+                                               'batch_size': batch_size})
+
+def average_averages(args, phase, size, times, model, batch_size):
+    return common.average_averages(times=times, test_model_func=test_model_new, 
                                    test_model_args={'args': args, 'size': size, 
-                                                    'model': model})
+                                                    'model': model, 
+                                                    'batch_size': batch_size})
 
 def set_default_tensor_type():
     if torch.cuda.is_available():
@@ -61,7 +73,8 @@ if __name__ == '__main__':
 
     model = build_model(args=args, phase=PHASE, size=IMAGE_SIZE)
     avgs = average_averages(args=args, phase=PHASE, size=IMAGE_SIZE, 
-                            times=args.num_tests, model=model)
+                            times=args.num_tests, model=model, 
+                            batch_size=args.batch_size)
 
     common.print_output(args=args, out_data=avgs, model_name=NET_NAME + str(IMAGE_SIZE))
  
