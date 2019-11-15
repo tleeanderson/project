@@ -21,26 +21,32 @@ def parse_args():
 def build_model(path):
     return models.load_model(filepath=path)
 
-def inference(model, image):
+def inference(model, image, batch_size):
     return common.time_inference(inference_func=model.predict_on_batch, 
-                                 inference_func_args={'x': np.expand_dims(image, axis=0)})
+                                 inference_func_args={'x': image}, 
+                                 batch_size=batch_size)
 
-def test_model(args, size, model):
-    images = common.read_images(image_name_file=args.image_name_file, 
-                                                              image_path=args.image_path, 
-                                                              size=size)
+def read_data(args, size, batch_size):
+    return common.read_images_batch(args=args, size=size, batch_size=batch_size)
+
+def test_model(images, args, size, model, batch_size):
     return common.test_model(im_data=images, inference_func=inference, 
-                          inference_func_args={'model': model})
+                          inference_func_args={'model': model,
+                                               'batch_size': batch_size})
 
-def average_averages(args, size, model):
+def average_averages(args, size, model, batch_size, images):
     return common.average_averages(times=args.num_tests, test_model_func=test_model, 
                                    test_model_args={'args': args, 'size': size, 
-                                                    'model': model})
+                                                    'model': model, 
+                                                    'images': images,
+                                                    'batch_size': batch_size})
 
 if __name__ == '__main__':
     args = parse_args()
     model = build_model(path=MODEL_PATH)
     model.summary()
-    avgs = average_averages(args=args, size=args.image_size, model=model)
+    images = read_data(args=args, size=args.image_size, batch_size=args.batch_size)
+    avgs = average_averages(args=args, size=args.image_size, model=model, batch_size=args.batch_size, 
+                            images=images)
     common.print_output(args=args, out_data=avgs, model_name=NET_NAME + str(IMAGE_SIZE))
     

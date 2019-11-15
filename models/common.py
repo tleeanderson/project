@@ -65,6 +65,14 @@ def average_averages(times, test_model_func, test_model_args, ik=KEY_IGNORE_SET)
 
     return {k: totals[k] / times for k in totals}
 
+def batch_images(images, batch_size):
+    remainder = images.shape[0] % batch_size
+    batches = range(0, images.shape[0] + 1, batch_size)
+    result = []
+    for bs, be in zip(range(len(batches)), range(1, len(batches))):
+        result.append(images[batches[bs]:batches[be]])
+    return result, images[images.shape[0]-remainder:]
+
 def read_images_batch(args, size, batch_size):
     images = read_images(image_name_file=args.image_name_file, 
                                     image_path=args.image_path, size=size)
@@ -91,14 +99,6 @@ def read_images(image_name_file, image_path, size):
         print("ERROR: Could not find {}".format(p))
     resized_images = resize_images(size=size, images=images)
     return np.asarray(resized_images)
-
-def batch_images(images, batch_size):
-    remainder = images.shape[0] % batch_size
-    batches = range(0, images.shape[0] + 1, batch_size)
-    result = []
-    for bs, be in zip(range(len(batches)), range(1, len(batches))):
-        result.append(images[batches[bs]:batches[be]])
-    return result, images[images.shape[0]-remainder:]
 
 def log_remainder(remainder, batch_size, total):
     
