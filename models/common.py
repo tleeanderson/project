@@ -85,8 +85,6 @@ def read_images_batch(args, size, batch_size):
 def test_model(im_data, inference_func, inference_func_args):
     points = []
     for i, img in enumerate(im_data):
-        if i % 50 == 0:
-            print("on batch: %d" % (i + 1))
         points.append(inference_func(image=img, **inference_func_args)[0])
     avg_sec = np.average(points)
     return {'avg_per_image_ms': avg_sec * 1000, 'avg_per_image_s': avg_sec, 
