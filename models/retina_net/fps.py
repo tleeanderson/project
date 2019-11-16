@@ -6,7 +6,6 @@ import keras_retinanet.models as models
 
 sys.path.append('..')
 import common
-import numpy as np
 
 MODEL_PATH = '../../pretrained/resnet50_coco_best_v2.1.0.h5'
 NET_NAME = 'RetinaNet'

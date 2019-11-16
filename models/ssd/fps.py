@@ -2,7 +2,6 @@ import torch
 import os.path as path
 import sys
 from torch.autograd import Variable
-#import time
 
 sys.path.append(path.abspath('./ssd.pytorch'))
 import ssd as model
