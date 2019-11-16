@@ -17,6 +17,14 @@ TRAINED_MODEL_FN = 'ssd300_mAP_77.43_v2.pth'
 TRAINED_MODEL_PATH = path.join(TRAINED_MODEL_DIR, TRAINED_MODEL_FN)
 
 def parse_args():
+    """Parses arguments by calling up to common and then adding
+       CornerNet_Lite specific arguments.
+
+    Args:
+         None
+    
+    Returns: parsed arguments
+    """
     parser = common.default_args(net_name=NET_NAME, 
                                  num_classes=21, image_size=IMAGE_SIZE)
     parser.add_argument('--trained-model', required=False, help='Path to trained state_dict file', 
@@ -24,6 +32,13 @@ def parse_args():
     return parser.parse_args()
 
 def build_model(args, phase, size):
+    """Builds an SSD model.
+
+    Args:
+         model_name: name of model
+
+    Returns: model
+    """
     ssd_model = model.build_ssd(phase, size, args.num_classes)
     ssd_model.load_state_dict(torch.load(args.trained_model))
     ssd_model.eval()
@@ -32,6 +47,15 @@ def build_model(args, phase, size):
     return ssd_model
 
 def inference(model, image, batch_size):
+    """Executes common.time_inference function with CornerNet_Lite arguments.
+
+    Args:
+         model: CornerNet_Lite model
+         image: input image
+         batch_size: size of batch
+    
+    Returns: tuple
+    """
     image = Variable(image)
     image = image.cuda()
     return common.time_inference(inference_func=model, 
@@ -39,23 +63,60 @@ def inference(model, image, batch_size):
                                  batch_size=batch_size)
 
 def read_data(args, size, batch_size):
+    """Executes common.read_images with CornerNet_Lite arguments.
+
+    Args:
+         image_name_file: file with names of images
+         image_path: path to images
+         size: size of images
+         batch_size: size of batch
+    
+    Returns: np array of shape (num_images, size, size, channels)
+    """
     batches = common.read_images_batch(image_name_file=args.image_name_file, 
                                        image_path=args.image_path, size=size, 
                                        batch_size=batch_size)
     return common.prepare_images(images=batches, size=size, batch=batch_size)
 
 def test_model(images, model, batch_size):
+    """Executes common.test_model with CornerNet_Lite arguments.
+
+    Args:
+         size: size of model
+         model: some CornerNet_Lite model
+         batch_size: size of batch
+         images: input images
+    
+    Returns: map
+    """
     return common.test_model(im_data=images, inference_func=inference, 
                           inference_func_args={'model': model, 
                                                'batch_size': batch_size})
 
 def average_averages(times, model, batch_size, images):
+    """Executes common.average_averages with CornerNet_Lite arguments.
+
+    Args:
+         size: size of images
+         model: some CornerNet_Lite model
+         batch_size: size of batch
+         images: some images
+    
+    Returns: map
+    """
     return common.average_averages(times=times, test_model_func=test_model, 
                                    test_model_args={'model': model, 
                                                     'batch_size': batch_size, 
                                                     'images': images})
 
 def set_default_tensor_type():
+    """Sets tensor type so SSD model does not error out.
+
+    Args:
+         None
+    
+    Returns: None
+    """
     if torch.cuda.is_available():
         torch.set_default_tensor_type('torch.cuda.FloatTensor')
     else:
