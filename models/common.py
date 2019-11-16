@@ -100,10 +100,6 @@ def read_images(image_name_file, image_path, size):
     resized_images = resize_images(size=size, images=images)
     return np.asarray(resized_images)
 
-def log_remainder(remainder, batch_size, total):
-    
-    return images
-
 def print_output(args, out_data, model_name):
     print('out_data ' + str(out_data))
     print("\n\nFrames Per Second result for %s, averaged over %d runs:" 

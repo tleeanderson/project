@@ -2,7 +2,7 @@ import torch
 import os.path as path
 import sys
 from torch.autograd import Variable
-import time
+#import time
 
 sys.path.append(path.abspath('./ssd.pytorch'))
 import ssd as model
@@ -48,7 +48,7 @@ def test_model(images, model, batch_size):
                           inference_func_args={'model': model, 
                                                'batch_size': batch_size})
 
-def average_averages(size, times, model, batch_size, images):
+def average_averages(times, model, batch_size, images):
     return common.average_averages(times=times, test_model_func=test_model, 
                                    test_model_args={'model': model, 
                                                     'batch_size': batch_size, 
@@ -66,8 +66,7 @@ if __name__ == '__main__':
 
     model = build_model(args=args, phase=PHASE, size=IMAGE_SIZE)
     images = read_data(args=args, size=IMAGE_SIZE, batch_size=args.batch_size)
-    avgs = average_averages(size=IMAGE_SIZE, 
-                            times=args.num_tests, model=model, 
+    avgs = average_averages(times=args.num_tests, model=model, 
                             batch_size=args.batch_size, 
                             images=images)
 
