@@ -58,37 +58,6 @@ def read_data(image_name_file, image_path, size, batch_size):
     return common.read_images(image_name_file=image_name_file,
                               image_path=image_path, size=size)
 
-def test_model(model, batch_size, images):
-    """Executes common.test_model with CornerNet_Lite arguments.
-
-    Args:
-         size: size of model
-         model: some CornerNet_Lite model
-         batch_size: size of batch
-         images: input images
-    
-    Returns: map
-    """
-    return common.test_model(im_data=images, inference_func=inference, 
-                             inference_func_args={'model': model, 
-                                                  'batch_size': batch_size})
-
-def average_averages(model, batch_size, images):
-    """Executes common.average_averages with CornerNet_Lite arguments.
-
-    Args:
-         size: size of images
-         model: some CornerNet_Lite model
-         batch_size: size of batch
-         images: some images
-    
-    Returns: map
-    """
-    return common.average_averages(times=args.num_tests, test_model_func=test_model, 
-                                test_model_args={'model': model, 
-                                                 'batch_size': batch_size, 
-                                                 'images': images})
-
 def build_model(model_name):
     """Builds a model.
 
@@ -109,5 +78,6 @@ if __name__ == '__main__':
     model = build_model(args.model)
     images = read_data(image_name_file=args.image_name_file, image_path=args.image_path, 
                        size=args.image_size, batch_size=BATCH_SIZE)
-    out = average_averages(model=model, batch_size=BATCH_SIZE, images=images)
+    out = common.default_average_averages(model=model, batch_size=BATCH_SIZE, images=images, 
+                                          inference_func=inference, num_tests=args.num_tests)
     common.print_output(num_tests=args.num_tests, out_data=out, model_name=args.model)

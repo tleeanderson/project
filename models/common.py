@@ -249,3 +249,36 @@ def make_dirs(dirs):
     """
     list(map(lambda d: os.makedirs(d, exist_ok=True), 
              list(filter(lambda d: not path.exists(d), dirs))))
+
+
+def default_test_model(model, batch_size, images, inference_func):
+    """Executes common.test_model with CornerNet_Lite arguments.
+
+    Args:
+         size: size of model
+         model: some CornerNet_Lite model
+         batch_size: size of batch
+         images: input images
+    
+    Returns: map
+    """
+    return test_model(im_data=images, inference_func=inference_func, 
+                             inference_func_args={'model': model, 
+                                                  'batch_size': batch_size})
+
+def default_average_averages(model, num_tests, batch_size, images, inference_func):
+    """Executes common.average_averages with CornerNet_Lite arguments.
+
+    Args:
+         size: size of images
+         model: some CornerNet_Lite model
+         batch_size: size of batch
+         images: some images
+    
+    Returns: map
+    """
+    return average_averages(times=num_tests, test_model_func=default_test_model, 
+                                test_model_args={'model': model, 
+                                                 'batch_size': batch_size, 
+                                                 'images': images, 
+                                                 'inference_func': inference_func})

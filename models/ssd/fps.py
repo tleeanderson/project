@@ -78,37 +78,6 @@ def read_data(args, size, batch_size):
                                        batch_size=batch_size)
     return common.prepare_images(images=batches, size=size, batch=batch_size)
 
-def test_model(images, model, batch_size):
-    """Executes common.test_model with SSD arguments.
-
-    Args:
-         size: size of model
-         model: some SSD model
-         batch_size: size of batch
-         images: input images
-    
-    Returns: map
-    """
-    return common.test_model(im_data=images, inference_func=inference, 
-                          inference_func_args={'model': model, 
-                                               'batch_size': batch_size})
-
-def average_averages(times, model, batch_size, images):
-    """Executes common.average_averages with SSD arguments.
-
-    Args:
-         size: size of images
-         model: some SSD model
-         batch_size: size of batch
-         images: some images
-    
-    Returns: map
-    """
-    return common.average_averages(times=times, test_model_func=test_model, 
-                                   test_model_args={'model': model, 
-                                                    'batch_size': batch_size, 
-                                                    'images': images})
-
 def set_default_tensor_type():
     """Sets tensor type so SSD model does not error out.
 
@@ -128,9 +97,9 @@ if __name__ == '__main__':
 
     model = build_model(args=args, phase=PHASE, size=IMAGE_SIZE)
     images = read_data(args=args, size=IMAGE_SIZE, batch_size=args.batch_size)
-    avgs = average_averages(times=args.num_tests, model=model, 
-                            batch_size=args.batch_size, 
-                            images=images)
+    avgs = common.default_average_averages(num_tests=args.num_tests, model=model, 
+                            batch_size=args.batch_size, images=images, 
+                                           inference_func=inference)
 
     common.print_output(num_tests=args.num_tests, out_data=avgs, model_name=NET_NAME + str(IMAGE_SIZE))
  

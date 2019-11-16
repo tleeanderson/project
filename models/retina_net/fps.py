@@ -64,37 +64,6 @@ def read_data(image_name_file, image_path, size, batch_size):
                                     image_path=image_path, 
                                     size=size, batch_size=batch_size)
 
-def test_model(images, model, batch_size):
-    """Executes common.test_model with RetinaNet arguments.
-
-    Args:
-         size: size of model
-         model: some RetinaNet model
-         batch_size: size of batch
-         images: input images
-    
-    Returns: map
-    """
-    return common.test_model(im_data=images, inference_func=inference, 
-                          inference_func_args={'model': model,
-                                               'batch_size': batch_size})
-
-def average_averages(model, batch_size, images):
-    """Executes common.average_averages with RetinaNet arguments.
-
-    Args:
-         size: size of images
-         model: some RetinaNet model
-         batch_size: size of batch
-         images: some images
-    
-    Returns: map
-    """
-    return common.average_averages(times=args.num_tests, test_model_func=test_model, 
-                                   test_model_args={'model': model, 
-                                                    'images': images,
-                                                    'batch_size': batch_size})
-
 if __name__ == '__main__':
     args = parse_args()
     model = build_model(path=MODEL_PATH)
@@ -102,8 +71,8 @@ if __name__ == '__main__':
     images = read_data(image_name_file=args.image_name_file, 
                        image_path=args.image_path, size=args.image_size, 
                        batch_size=args.batch_size)
-    avgs = average_averages(model=model, batch_size=args.batch_size, 
-                            images=images)
+    avgs = common.default_average_averages(model=model, batch_size=args.batch_size, 
+                            images=images, inference_func=inference, num_tests=args.num_tests)
     common.print_output(num_tests=args.num_tests, out_data=avgs, 
                         model_name=NET_NAME + str(IMAGE_SIZE))
     
