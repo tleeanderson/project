@@ -18,7 +18,7 @@ TRAINED_MODEL_PATH = path.join(TRAINED_MODEL_DIR, TRAINED_MODEL_FN)
 
 def parse_args():
     """Parses arguments by calling up to common and then adding
-       CornerNet_Lite specific arguments.
+       SSD specific arguments.
 
     Args:
          None
@@ -47,10 +47,10 @@ def build_model(args, phase, size):
     return ssd_model
 
 def inference(model, image, batch_size):
-    """Executes common.time_inference function with CornerNet_Lite arguments.
+    """Executes common.time_inference function with SSD arguments.
 
     Args:
-         model: CornerNet_Lite model
+         model: SSD model
          image: input image
          batch_size: size of batch
     
@@ -63,7 +63,7 @@ def inference(model, image, batch_size):
                                  batch_size=batch_size)
 
 def read_data(args, size, batch_size):
-    """Executes common.read_images with CornerNet_Lite arguments.
+    """Executes common.read_images with SSD arguments.
 
     Args:
          image_name_file: file with names of images
@@ -79,11 +79,11 @@ def read_data(args, size, batch_size):
     return common.prepare_images(images=batches, size=size, batch=batch_size)
 
 def test_model(images, model, batch_size):
-    """Executes common.test_model with CornerNet_Lite arguments.
+    """Executes common.test_model with SSD arguments.
 
     Args:
          size: size of model
-         model: some CornerNet_Lite model
+         model: some SSD model
          batch_size: size of batch
          images: input images
     
@@ -94,11 +94,11 @@ def test_model(images, model, batch_size):
                                                'batch_size': batch_size})
 
 def average_averages(times, model, batch_size, images):
-    """Executes common.average_averages with CornerNet_Lite arguments.
+    """Executes common.average_averages with SSD arguments.
 
     Args:
          size: size of images
-         model: some CornerNet_Lite model
+         model: some SSD model
          batch_size: size of batch
          images: some images
     
