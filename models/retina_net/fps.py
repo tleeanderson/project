@@ -26,7 +26,9 @@ def inference(model, image, batch_size):
                                  batch_size=batch_size)
 
 def read_data(args, size, batch_size):
-    return common.read_images_batch(args=args, size=size, batch_size=batch_size)
+    return common.read_images_batch(image_name_file=args.image_name_file, 
+                                    image_path=args.image_path, 
+                                    size=size, batch_size=batch_size)
 
 def test_model(images, args, size, model, batch_size):
     return common.test_model(im_data=images, inference_func=inference, 
@@ -47,5 +49,5 @@ if __name__ == '__main__':
     images = read_data(args=args, size=args.image_size, batch_size=args.batch_size)
     avgs = average_averages(args=args, size=args.image_size, model=model, batch_size=args.batch_size, 
                             images=images)
-    common.print_output(args=args, out_data=avgs, model_name=NET_NAME + str(IMAGE_SIZE))
+    common.print_output(args.num_tests, out_data=avgs, model_name=NET_NAME + str(IMAGE_SIZE))
     

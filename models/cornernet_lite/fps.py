@@ -57,4 +57,4 @@ if __name__ == '__main__':
     images = read_data(args=args, size=args.image_size, batch_size=BATCH_SIZE)
     out = average_averages(args=args, size=args.image_size, model=model,
                            batch_size=BATCH_SIZE, images=images)
-    common.print_output(args=args, out_data=out, model_name=args.model)
+    common.print_output(num_tests=args.num_tests, out_data=out, model_name=args.model)
