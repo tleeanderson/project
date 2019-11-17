@@ -45,6 +45,28 @@ def read_file(path):
         data = f.read()
     return data
 
+def pytorch_model_parameters(model):
+    """Given a pytorch model, computes the number of 
+       parameters in the model. model should be the
+       parent object of the network. Thus, all 
+       submodules or portions of the network should
+       be members of model.
+       This method was heavily based off of a section
+       in core/nnet/py_factory.py in
+       git@github.com:princeton-vl/CornerNet-Lite.git.
+    Args:
+         model: some pytorch model
+    
+    Returns: number of parameters
+    """
+    total_params = 0
+    for params in model.parameters():
+        num_params = 1
+        for x in params.size():
+            num_params *= x
+        total_params += num_params
+    return total_params
+
 def process_file_names(data):
     """Given string, splits on newline and returns
        everything but last element.

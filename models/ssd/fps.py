@@ -40,6 +40,8 @@ def build_model(args, phase, size):
     Returns: model
     """
     ssd_model = model.build_ssd(phase, size, args.num_classes)
+    num_params = common.pytorch_model_parameters(model=ssd_model)
+    print("total parameters: {}".format(num_params))
     ssd_model.load_state_dict(torch.load(args.trained_model))
     ssd_model.eval()
     ssd_model = ssd_model.cuda()
